@@ -12,6 +12,10 @@
     "html",
     "css"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rstefani87info/ares-web.git"
+  },
   "author": "Roberto Stefani",
   "license": "MIT",
   "dependencies": {
