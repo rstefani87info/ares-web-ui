@@ -14,7 +14,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rstefani87info/ares-web.git"
+    "url": "git+https://github.com/rstefani87info/ares-web-ui.git"
   },
   "author": "Roberto Stefani",
   "license": "MIT",
