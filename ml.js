@@ -24,7 +24,7 @@ export async function parseFile(file) {
 export async function parseUrl(url) {
   let pageContent = "";
   let headers = {};
-  if (/^(?:[a-z]+:)?\/\//.test(html)) {
+  if (/^(?:[a-z]+:)?\/\//.test(url)) {
     try {
       response = await axios.get(url);
       pageContent = response.data;
@@ -63,5 +63,6 @@ export function parseCode(code, headers = {}) {
     }
   }
 
-  const $res = { window: window, $: jquery(window), headers: headers };
+  const $res = { body: code, window: window, $: jquery(window), headers: headers };
+  return $res;
 }
