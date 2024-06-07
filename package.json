@@ -22,6 +22,7 @@
     "axios": "^1.7.2",
     "jquery": "^3.7.1",
     "jsdom": "^24.1.0",
-    "mime": "^4.0.3"
+    "mime": "^4.0.3",
+    "@ares/file": "github:rstefani87info/ares-files#master"
   }
 }
