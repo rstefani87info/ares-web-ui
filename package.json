@@ -23,6 +23,6 @@
     "jquery": "^3.7.1",
     "jsdom": "^24.1.0",
     "mime": "^4.0.3",
-    "@ares/files": "github:rstefani87info/ares-files#master"
+    "@ares/core": "github:rstefani87info/ares-core#master"
   }
 }
