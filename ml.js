@@ -1,163 +1,48 @@
-import { JSDOM } from "jsdom";
+import { JSDOM , ResourceLoader} from "jsdom";
 import jquery from "jquery";
-import fs from "fs";
 import axios from "axios";
-import mime from "mime";
 
-// export async function parse(htmlOrUrlOrPath, runScript = false) {
-//   let htmlPageContent = "";
-//   if (fs.existsSync(html)) {
-//     return await parseFile(html);
-//   } else if (/^(?:[a-z]+:)?\/\//.test(html)) {
-//     return await parseUrl(html);
-//   } else return parseCode(htmlPageContent, runScript);
-// }
-// export async function parseFile(file, runScript = false) {
-//   let pageContent = "";
-//   let headers = {};
-//   if (fs.existsSync(html)) {
-//     htmlPageContent = fs.readFileSync(html, "utf-8");
-//     headers["content-type"] = mime.getType(filePath);
-//   }
-//   return parseCode(pageContent, headers);
-// }
-// export async function parseUrl(url, httpMethod = "GET", headers = {}, requestBody = null, runScript = false) {
-//   let pageContent = "";
-//   let headers = {};
-//   if (/^(?:[a-z]+:)?\/\//.test(url)) {
-//     try {
-//       const response = await axios[httpMethod.toLowerCase()](url, { headers: headers, data: requestBody });
-//       const pageContent = response.data;
-//       const headers = response.headers;
-//       return parseCode(pageContent, runScript, headers);
-//     } catch (error) {
-//       console.error("Error fetching webpage:", error);
-//       throw error;
-//     }
-//   }
-//   return null;
-// }
-
-// export function parseCode(code, runScript = false, headers = {}) {
-//   const { window } = new JSDOM(code, {
-//     runScripts: runScript ? "dangerously" : "outside-only",
-//   });
-//   setupWindow(window);
-//   const $res = {
-//     body: code,
-//     window: window,
-//     $: jquery(window),
-//     headers: headers,
-//   };
-
-//   if (window.document.doctype && window.document.doctype.name === "HTML") {
-//     const metaTags = window.document.querySelectorAll("head > meta");
-//     for (const metaTag of metaTags) {
-//       const name = metaTag.getAttribute("name");
-//       const content = metaTag.getAttribute("content");
-
-//       if (name && content) {
-//         headers[name] = content;
-//       }
-//     }
-//   } else {
-//     const contentType = window.document.contentType;
-//     const charset = window.document.characterSet;
-
-//     if (contentType) {
-//       headers["Content-Type"] = contentType;
-//     }
-
-//     if (charset) {
-//       headers["charset"] = charset;
-//     }
-//   }
-
-//   return $res;
-// }
+ 
 
 export function parseCode(
   code,
   headers = {},
   payload = {},
   onload = null,
-  options = {
-    url: "about:blank",
-    referrer: "",
-    contentType: "text/html",
-    parsingMode: "html",
-    parseOptions: {
-      sourceCodeLocationInfo: false,
-      scriptingEnabled: false,
-    },
-    runScripts: undefined,
-    encoding,
-    pretendToBeVisual: false,
-    storageQuota: 5000000,
-    resourceLoader: undefined,
-    virtualConsole: undefined,
-    cookieJar: undefined,
-  }
+  options = null
 ) {
   const newJSDOM = JSDOM.fragment(code, options);
   newJSDOM.window.aReS.request = { payload: payload, headers: headers };
   return newJSDOM;
 }
 
-export function parseUrl(
+export async function parseUrl(
   url,
   method = "GET",
   headers = {},
   payload = {},
   onload = null,
-  options = {
-    url: "about:blank",
-    referrer: "",
-    contentType: "text/html",
-    parsingMode: "html",
-    parseOptions: {
-      sourceCodeLocationInfo: false,
-      scriptingEnabled: false,
-    },
-    runScripts: undefined,
-    encoding,
-    pretendToBeVisual: false,
-    storageQuota: 5000000,
-    resourceLoader: undefined,
-    virtualConsole: undefined,
-    cookieJar: undefined,
-  }
+  options = null
 ) {
-  let newJSDOM = null;
-  method = method.toLowerCase();
-  if (method === "get") {
-    url = url + (url.includes("?") ? "&" : "?") + $.param(payload);
-    newJSDOM = JSDOM.fromURL(url, options);
-  } else {
-    axios[method](url, { headers: headers, data: payload }).then(function (
-      response
-    ) {
-      newJSDOM = JSDOM.fragment(response.data, options);
-    });
-  }
-  setTimeout(() => {
-    /* cheat for async loading in axios case */
-    setupWindow(newJSDOM.window);
-  }, 0);
+  const customLoader = new CustomUrlLoader(url, method, payload, headers);
+  const newJSDOM = await new JSDOM( await customLoader.fetch());
+  setupWindow(url, newJSDOM.window, onload, null, method, headers, payload);
+  newJSDOM.window.aReS.response = { status: customLoader.response.status, headers: customLoader.response.headers };
+  
   return newJSDOM;
 }
 
 export function parseFile(filePath) {
   const jsdom =  JSDOM.fromFile(filePath);
-  setupWindow(jsdom.window);
+  setupWindow(filePath,jsdom.window);
   return jsdom;
 }
 
-export function setupWindow(window, caller = null) {
+export function setupWindow(url,window, onload = null, caller = null, method = "GET", headers = {}, payload = {}) {
   window.aReS = {
     callerWindow: caller,
     calledWindows: [],
-    fromRequest: {
+    request: {
       url: url,
       method: method,
       payload: payload,
@@ -165,29 +50,35 @@ export function setupWindow(window, caller = null) {
     },
     $ : jquery(window),
   };
-  const oldOpen = newJSDOM.window.open;
+
+  window.addEventListener('load', () => {
+    if (onload) {
+      onload();
+    }
+  });
+  const oldOpen = window.open;
   window.open = (url, target, features) => {
     const newWindow = oldOpen(url, target, features);
     window.aReS.calledWindows.push(newWindow);
-    setupWindow(newWindow, window);
+    setupWindow(url, newWindow, null, window);
     newWindow.aReS.type = "window.open";
     return newWindow;
   };
 
-  const oldFetch = newJSDOM.window.fetch;
+  const oldFetch = window.fetch;
   window.fetch = (url, options) => {
     const newWindow = oldFetch(url, options);
     window.aReS.calledWindows.push(newWindow);
-    setupWindow(newWindow, window);
+    setupWindow(url, newWindow, null, window);
     newWindow.aReS.type = "fetch";
     return newWindow;
   };
 
-  const oldXMLHttpRequest = newJSDOM.window.XMLHttpRequest;
+  const oldXMLHttpRequest = window.XMLHttpRequest;
   window.XMLHttpRequest = (url, options) => {
     const newWindow = oldXMLHttpRequest(url, options);
     window.aReS.calledWindows.push(newWindow);
-    setupWindow(newWindow, window);
+    setupWindow(url, newWindow, null, window);
     newWindow.aReS.type = "XMLHttpRequest";
     return newWindow;
   };
@@ -206,5 +97,31 @@ export function trigger(
       while (conditionCheck && conditionCheck($, element) === null) {}
       callback($, element);
     }, 0);
+  }
+}
+
+
+class CustomUrlLoader {
+
+  constructor(url, method, payload, headers) {
+      this.url = url;
+      this.method = method;
+      this.method = this.method.toLowerCase();
+  
+      this.payload = payload;
+      this.headers = headers;
+  }
+  async fetch(options={}) {
+    options.headers = this.headers;
+    if (this.method === "get") {
+      this.url = this.url + (this.url.includes("?") ? "&" : "?") + new URLSearchParams(this.payload).toString();
+    } 
+    else {
+      options.data = this.payload;
+    }
+    this.response  = await axios(this.url, options);
+    const body = await this.response.data;
+
+    return Buffer.from(body);
   }
 }
