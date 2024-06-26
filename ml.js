@@ -134,16 +134,17 @@ export async function parseUrl(
   if (method === "get") {
     url = url + (url.includes("?") ? "&" : "?") + http.toQueryString(payload);
     newJSDOM = await JSDOM.fromURL(url, options);
+    setupWindow(url, newJSDOM.window);
   } else {
-    axios[method](url, { headers: headers, data: payload }).then(function (
+    await axios[method](url, { headers: headers, data: payload }).then(function (
       response
     ) {
       newJSDOM = JSDOM.fragment(response.data, options);
+      setupWindow(url, newJSDOM.window);
     });
   }
   setTimeout(() => {
     /* cheat for async loading in axios case */
-    setupWindow(url, newJSDOM.window);
   }, 0);
   return newJSDOM;
 }
