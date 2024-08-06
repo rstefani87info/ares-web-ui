@@ -19,10 +19,18 @@
   "author": "Roberto Stefani",
   "license": "MIT",
   "dependencies": {
+    "@ares/core": "github:rstefani87info/ares-core#master",
     "axios": "^1.7.2",
     "jquery": "^3.7.1",
     "jsdom": "^24.1.0",
-    "mime": "^4.0.3",
-    "@ares/core": "github:rstefani87info/ares-core#master"
+    "mime": "^4.0.3"
+  },
+  "devDependencies": {
+    "@eslint/compat": "^1.1.0",
+    "@eslint/js": "^9.5.0",
+    "eslint": "^9.5.0",
+    "eslint-plugin-react": "^7.34.3",
+    "globals": "^15.6.0",
+    "typescript-eslint": "^7.14.1"
   }
 }
