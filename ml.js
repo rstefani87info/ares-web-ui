@@ -1,9 +1,7 @@
 import { JSDOM } from "jsdom";
 import jquery from "jquery";
-import fs from "fs";
 import axios from "axios";
 import http from "@ares/web/http.js";
-import mime from "mime";
 
 // export async function parse(htmlOrUrlOrPath, runScript = false) {
 //   let htmlPageContent = "";
@@ -168,7 +166,7 @@ export function setupWindow(urlOrPath ,window , caller = null, method = "GET", h
     },
     $ : jquery(window),
   };
-  const oldOpen = newJSDOM.window.open;
+  const oldOpen = window.open;
   window.open = (url, target, features) => {
     const newWindow = oldOpen(url, target, features);
     window.aReS.calledWindows.push(newWindow);
@@ -177,7 +175,7 @@ export function setupWindow(urlOrPath ,window , caller = null, method = "GET", h
     return newWindow;
   };
 
-  const oldFetch = newJSDOM.window.fetch;
+  const oldFetch = window.fetch;
   window.fetch = (url, options) => {
     const newWindow = oldFetch(url, options);
     window.aReS.calledWindows.push(newWindow);
@@ -186,7 +184,7 @@ export function setupWindow(urlOrPath ,window , caller = null, method = "GET", h
     return newWindow;
   };
 
-  const oldXMLHttpRequest = newJSDOM.window.XMLHttpRequest;
+  const oldXMLHttpRequest = window.XMLHttpRequest;
   window.XMLHttpRequest = (url, options) => {
     const newWindow = oldXMLHttpRequest(url, options);
     window.aReS.calledWindows.push(newWindow);
