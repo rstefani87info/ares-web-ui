@@ -19,7 +19,7 @@
   "author": "Roberto Stefani",
   "license": "MIT",
   "dependencies": {
-    "@ares/core": "github:rstefani87info/ares-core#master",
+    "@ares/core": "git+https://github.com/rstefani87info/ares-core.git#master",
     "axios": "^1.7.2",
     "jquery": "^3.7.1",
     "jsdom": "^24.1.0",
